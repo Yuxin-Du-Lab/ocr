@@ -1,11 +1,11 @@
 # my-TrOCR
 ## main diff
-add **BenchmarkDataset** class and **MDB** def in *data.py* for chinese banchmark dataset(document, web, scene ...)
-add if-else branch in **load_dataset** def in *task.py* 
-add *config* dir:
- - *environment.txt* record the conda-env
- - *vocub.txt* from bert-based-chinese
- - *my_vocub.txt* generated from *vocub.txt* via *make_vocub.py* to match trocr-dict-form
+ - add **BenchmarkDataset** class and **MDB** def in *data.py* for chinese banchmark dataset(document, web, scene ...)
+ - add if-else branch in **load_dataset** def in *task.py* 
+ - add *config* dir:
+    - *environment.txt* record the conda-env
+    - *vocub.txt* from bert-based-chinese
+    - *my_vocub.txt* generated from *vocub.txt* via *make_vocub.py* to match trocr-dict-form
 
 ## reference links
  - https://github.com/fudanvi/benchmarking-chinese-text-recognition
