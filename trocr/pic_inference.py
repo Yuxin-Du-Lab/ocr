@@ -63,12 +63,12 @@ def get_text(cfg, generator, model, sample, bpe):
 
 
 if __name__ == '__main__':
-    model_path = 'path/to/model'
-    jpg_path = "path/to/pic"
+    model_path = './saved/trocr-small-handwritten.pt'
+    jpg_path = "/data/data/OCR_DATA/IAM_test/image/c04-110-00.jpg"
     beam = 5
 
     model, cfg, task, generator, bpe, img_transform, device = init(model_path, beam)
-
+    print(type(model[0]))
     sample = preprocess(jpg_path, img_transform)
 
     text = get_text(cfg, generator, model, sample, bpe)

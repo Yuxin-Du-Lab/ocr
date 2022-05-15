@@ -42,7 +42,7 @@ class TrOCRModel(FairseqEncoderDecoderModel):
         model_cfg: Optional[DictConfig] = None,
         args: Optional[Namespace] = None,
     ):
-
+        print(">>>> load_state_dict")
         if model_cfg is None and args is not None:
             logger.warn("using 'args' is deprecated, please update your code to use dataclass config")
             model_cfg = convert_namespace_to_omegaconf(args).model
@@ -133,7 +133,8 @@ class TrOCRModel(FairseqEncoderDecoderModel):
 
         if getattr(args, "max_target_positions", None) is None:
             args.max_target_positions = DEFAULT_MAX_TARGET_POSITIONS
-
+        print(">>> check target_dictionary")
+        print(task.target_dictionary)
         if getattr(args, "decoder_pretrained", None).startswith('roberta2'):         
             logger.info('Using the learned pos embedding version loading roberta.')
             decoder_embed_tokens = cls.build_embedding(

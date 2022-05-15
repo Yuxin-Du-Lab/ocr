@@ -9,6 +9,13 @@ from natsort import natsorted
 from PIL import Image
 from tqdm import tqdm
 
+# for mdb load
+import lmdb
+import pyarrow as pa
+from PIL import Image
+import cv2
+import numpy as np
+
 logger = logging.getLogger(__name__)
 
 
@@ -165,8 +172,10 @@ def STR(gt_path, bpe_parser):
     with open(gt_path, 'r') as fp:
         for line in tqdm(list(fp.readlines()), desc='Loading STR:'):
             line = line.rstrip()
-            temp = line.split('\t', 1)
-            img_file = temp[0]
+            temp = line.split(' ', 1)
+            img_file = temp[0] + '.jpg'
+            # temp = line.split('\t', 1)
+            # img_file = temp[0]
             text = temp[1]
 
             img_path = os.path.join(root_dir, 'image', img_file)  
@@ -179,7 +188,6 @@ def STR(gt_path, bpe_parser):
             img_id += 1
 
     return data
-
 
 class SyntheticTextRecognitionDataset(FairseqDataset):
     def __init__(self, gt_path, tfm, bpe_parser, target_dict):
@@ -200,6 +208,77 @@ class SyntheticTextRecognitionDataset(FairseqDataset):
 
         tfm_img = self.tfm(image)  # h, w, c
         return {'id': idx, 'tfm_img': tfm_img, 'label_ids': input_ids}
+
+    def size(self, idx):
+        img_dict = self.data[idx]
+
+        encoded_str = img_dict['encoded_str']
+        input_ids = self.target_dict.encode_line(encoded_str, add_if_not_exist=False)
+        return len(input_ids)
+
+    def num_tokens(self, idx):
+        return self.size(idx)
+
+    def collater(self, samples):
+        return default_collater(self.target_dict, samples)
+
+
+def MDB(env, bpe=None):
+    data = []
+    length = -1
+    with env.begin(write=False) as txn:
+            length = txn.stat()['entries'] - 1
+            print('MDB building data...')
+            for key, value in tqdm(list(txn.cursor()), desc='Loading MDB:'):
+                if key != b'num-samples':
+                    item_type, idx_str = str(key, encoding='UTF-8').split('-')
+                    idx = int(idx_str) - 1
+                    if item_type == 'image':
+                        data.append({'img_path': key, 'image_id':idx, 'text':None, 'encoded_str':None})
+                    else:
+                        label = str(value, encoding='UTF-8')
+                        if not bpe:
+                            encoded_str = label
+                        else:
+                            encoded_str = bpe.encode(label) 
+                        data[idx]['text'] = label
+                        data[idx]['encoded_str'] = encoded_str
+            print('Dataset size---' + str(len(data)))
+    return length, data
+
+
+class BenchmarkDataset(FairseqDataset):
+    def __init__(self, db_path, split, data_type, transform, target_dict, bpe):
+        print("***************************")
+        print("run BenchmarkDataset init..")
+        self.db_path = db_path + data_type + "_" + split + "/"
+        self.target_dict = target_dict
+        self.tfm = transform
+        self.bpe = bpe
+        print('self.db_path---' + self.db_path)
+
+        self.env = lmdb.open(self.db_path, subdir=os.path.isdir(self.db_path),
+                             readonly=True, lock=False,
+                             readahead=False, meminit=False)
+        self.length, self.data = MDB(self.env, self.bpe)
+        print("^^^^^^^init finish^^^^^^^^^")
+
+
+    def __getitem__(self, idx):
+        img_dict = self.data[idx]
+
+        with self.env.begin(write=False) as txn:
+            image_b = txn.get(img_dict['img_path'])
+        image = cv2.imdecode(np.fromstring(image_b ,dtype=np.uint8),1)
+        image=Image.fromarray(image).convert('RGB')
+        encoded_str = img_dict['encoded_str']
+        tfm_img = self.tfm(image)  # h, w, c
+        input_ids = self.target_dict.encode_line(encoded_str, add_if_not_exist=False)
+
+        return {'id': idx, 'tfm_img': tfm_img, 'label_ids': input_ids}
+
+    def __len__(self):
+        return len(self.data)
 
     def size(self, idx):
         img_dict = self.data[idx]

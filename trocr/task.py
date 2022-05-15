@@ -1,15 +1,18 @@
 import os
+
+from markupsafe import string
 from fairseq import search
 
 from fairseq.data import Dictionary, encoders
 from fairseq.tasks import LegacyFairseqTask, register_task
 from fairseq.tasks.fairseq_task import FairseqTask
 
+
 try:
-    from .data import SROIETextRecognitionDataset, SyntheticTextRecognitionDataset
+    from .data import SROIETextRecognitionDataset, SyntheticTextRecognitionDataset, BenchmarkDataset
     from .data_aug import build_data_aug
 except:
-    from data import SROIETextRecognitionDataset, SyntheticTextRecognitionDataset
+    from data import SROIETextRecognitionDataset, SyntheticTextRecognitionDataset, BenchmarkDataset
     from data_aug import build_data_aug
 
 import logging
@@ -67,6 +70,7 @@ class SROIETextRecognitionTask(LegacyFairseqTask):
                             help='Random erase count (default: 1)')
         parser.add_argument('--resplit', action='store_true', default=False,
                             help='Do not random erase first (clean) augmentation split')
+
                    
     @classmethod
     def setup_task(cls, args, **kwargs):
@@ -97,7 +101,8 @@ class SROIETextRecognitionTask(LegacyFairseqTask):
                 target_dict = Dictionary.load(dict_file_like)
             else:
                 target_dict = Dictionary.load(args.dict_path_or_url)        
-        
+        print(">>> check point")
+
         logger.info('[label] load dictionary: {} types'.format(len(target_dict)))
 
         return SROIETextRecognitionTask(args, target_dict)
@@ -130,7 +135,8 @@ class SROIETextRecognitionTask(LegacyFairseqTask):
             tfm = build_data_aug(input_size, mode=split)            
         else:
             raise Exception('Undeined image preprocess method.')
-        
+        print(">>> split mode :" + split)
+        print(self.args)
         # load the dataset
         if self.args.data_type == 'SROIE':
             root_dir = os.path.join(self.data_dir, split)
@@ -138,6 +144,11 @@ class SROIETextRecognitionTask(LegacyFairseqTask):
         elif self.args.data_type == 'STR':
             gt_path = os.path.join(self.data_dir, 'gt_{}.txt'.format(split))            
             self.datasets[split] = SyntheticTextRecognitionDataset(gt_path, tfm, self.bpe, self.target_dict)
+        elif self.args.data_type == 'document' \
+          or self.args.data_type == 'scene'    \
+          or self.args.data_type == 'web':
+            db_path = self.data_dir
+            self.datasets[split] = BenchmarkDataset(db_path, split, self.args.data_type, tfm, self.target_dict, self.bpe)
         else:
             raise Exception('Not defined dataset type: ' + self.args.data_type)
     
