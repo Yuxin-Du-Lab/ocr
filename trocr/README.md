@@ -5,7 +5,11 @@
  - add *config* dir:
     - *environment.txt* record the conda-env
     - *vocub.txt* from bert-based-chinese
-    - *my_vocub.txt* generated from *vocub.txt* via *make_vocub.py* to match trocr-dict-form
+    - *my_vocab.txt* generated from *vocab.txt* via *make_vocab.py* to match trocr-dict-form
+ - add *script* dir:
+    - *pooling_data.py* used to pooling label(chinese text) of web, document and scene dataset in to *trocr/data* dir (generate *test.cn*, *train.cn* and *valid.cn* files)
+    - *generate_dict.sh* using fairseq's preprocessing to generate dictionary into *trocr/dict_${size}*
+    - *make_vocab.py* used to generate a naive dictionary(freq all 1) into *trocr/config/*
 
 ## reference links
  - https://github.com/fudanvi/benchmarking-chinese-text-recognition
