@@ -1,4 +1,4 @@
-export NWORDSSRC=21128
+export NWORDSSRC=50000
 
 fairseq-preprocess 	\
 --source-lang cn 	\

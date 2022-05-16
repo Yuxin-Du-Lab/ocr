@@ -2,6 +2,7 @@
 import os
 from tqdm import tqdm
 import lmdb
+import random
 
 root_path = '/home/duyx/workspace/data/benchmark_dataset/'
 dataset_name = ['web', 'document', 'scene']
@@ -34,6 +35,7 @@ def load_text(env):
 
 
 def load_split(split_path):
+    print("loading---" + split_path)
     env = lmdb.open(split_path, subdir=os.path.isdir(split_path),
                         readonly=True, lock=False,
                         readahead=False, meminit=False)
@@ -70,6 +72,9 @@ def generate_file(data, file_name):
 
 if __name__ == '__main__':
     train_all, valid_all, test_all = load_datasets()
+    random.shuffle(train_all)
+    random.shuffle(valid_all)
+    random.shuffle(test_all)
     generate_file(train_all, 'train.cn')
     generate_file(valid_all, 'valid.cn')
     generate_file(test_all, 'test.cn')

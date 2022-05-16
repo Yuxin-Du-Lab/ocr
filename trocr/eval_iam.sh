@@ -7,7 +7,7 @@ export CUDA_VISIBLE_DEVICES=0
 
 $(which fairseq-generate) \
         --data-type ${DATASET} --user-dir ./ --task text_recognition --input-size 384 \
-        --beam 10 --scoring sroie --gen-subset test --batch-size ${BSZ} \
+        --beam 10 --scoring acc_ed --gen-subset test --batch-size ${BSZ} \
         --path ${MODEL} --results-path ${RESULT_PATH} --preprocess DA2 \
         --bpe gpt2 --decoder-pretrained roberta \
         --dict-path-or-url /home/duyx/workspace/code/OCR/unilm/trocr/config/vocab.txt \
